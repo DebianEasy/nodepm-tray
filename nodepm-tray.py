@@ -8,7 +8,7 @@ import sys
 from threading import Thread
 import time
 
-version="0.2.3"
+version="0.2.4"
 
 def lightup():
     subprocess.run("nodepm backlight up",shell=True)
@@ -106,6 +106,7 @@ def update():
     image_name_old = image_name
     power_supply_old = power_supply
     display_flag_old = display_flag
+    return 0
 def refresh():
     global notify_line_old
     global battery_capacity_old
@@ -131,15 +132,9 @@ def refresh():
     icon.icon = image
     icon.title = notify_line
     icon.menu = (item('backlight up', lightup), item('backlight down', lightdown),item(display_line, displaymode_switch),item(menu_line,powermode_show))
-def update_daemon():
-    count = 0
-    while True:
-        time.sleep(5)
-        update()
-        count = count + 1
-        if count >= 12 :
-            refresh()
-            count = 0
+    return 0
+def icon_run():
+    icon.run()
 
 if len(sys.argv) > 1 :
     if sys.argv[1] == '--help':
@@ -174,6 +169,14 @@ image_name_old = image_name
 display_flag_old = display_flag
 menu = (item('backlight up', lightup), item('backlight down', lightdown),item(display_line, displaymode_switch),item(menu_line,powermode_show))
 icon = pystray.Icon("NodePm applet",image,notify_line,menu)
-thread = Thread(target=update_daemon)
-thread.start()
-icon.run()
+thread_icon = Thread(target=icon_run)
+thread_icon.start()
+count = 0
+while True:
+    time.sleep(5)
+    Thread(target=update).start()
+    #thread_update.join()
+    count = count + 1
+    if count >= 12 :
+        Thread(target=refresh).start()
+        #thread_refresh.join()
